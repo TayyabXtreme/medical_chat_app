@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Chatbot</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-color: #f8f9fa;
+            --text-color: #212529;
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --accent-color: #4895ef;
+            --user-msg-bg: #d8f3dc;
+            --bot-msg-bg: #f1f3f5;
+            --border-color: #dee2e6;
+            --disclaimer-bg: #e9ecef;
+            --symptom-tag-bg: #e0fbfc;
+            --diagnosis-bg: #f8f9fa;
+            --confidence-bg: #e9ecef;
+            --confidence-fill: #4cc9f0;
+            --transition-speed: 0.3s;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #212529;
+            --text-color: #f8f9fa;
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --accent-color: #4895ef;
+            --user-msg-bg: #184e77;
+            --bot-msg-bg: #343a40;
+            --border-color: #495057;
+            --disclaimer-bg: #343a40;
+            --symptom-tag-bg: #168aad;
+            --diagnosis-bg: #343a40;
+            --confidence-bg: #495057;
+            --confidence-fill: #4cc9f0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            transition: background-color var(--transition-speed), color var(--transition-speed);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            color: var(--primary-color);
+        }
+
+        .theme-toggle {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            transition: transform 0.3s, background-color 0.3s;
+        }
+
+        .theme-toggle:hover {
+            transform: rotate(30deg);
+            background-color: var(--border-color);
+        }
+
+        .chat-container {
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 15px;
+            height: 500px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            scroll-behavior: smooth;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .message {
+            margin: 15px 0;
+            padding: 12px 15px;
+            border-radius: 12px;
+            max-width: 80%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            animation: fadeIn 0.5s ease-out;
+            word-wrap: break-word;
+            position: relative;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .user-message {
+            background-color: var(--user-msg-bg);
+            margin-left: auto;
+            text-align: right;
+            border-bottom-right-radius: 4px;
+        }
+
+        .bot-message {
+            background-color: var(--bot-msg-bg);
+            margin-right: auto;
+            border-bottom-left-radius: 4px;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        #user-input {
+            flex-grow: 1;
+            padding: 12px 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 25px;
+            font-size: 1rem;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: border-color 0.3s;
+        }
+
+        #user-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.3);
+        }
+
+        #send-button {
+            padding: 12px 20px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        #send-button:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        #send-button:active {
+            transform: translateY(0);
+        }
+
+        .disclaimer {
+            font-size: 0.8rem;
+            color: var(--text-color);
+            opacity: 0.8;
+            margin-top: 20px;
+            padding: 15px;
+            background-color: var(--disclaimer-bg);
+            border-radius: 10px;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .diagnosis-section {
+            margin-top: 15px;
+            font-size: 0.9rem;
+            color: var(--text-color);
+            opacity: 0.9;
+        }
+
+        .symptom-tag {
+            display: inline-block;
+            background-color: var(--symptom-tag-bg);
+            padding: 4px 10px;
+            border-radius: 15px;
+            margin: 3px;
+            font-size: 0.8rem;
+            animation: popIn 0.4s ease-out;
+            transition: transform 0.2s;
+        }
+
+        .symptom-tag:hover {
+            transform: translateY(-2px);
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            70% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .diagnosis-item {
+            margin-top: 8px;
+            padding: 10px;
+            background-color: var(--diagnosis-bg);
+            border-radius: 8px;
+            border-left: 3px solid var(--accent-color);
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .confidence-bar {
+            height: 6px;
+            background-color: var(--confidence-bg);
+            border-radius: 3px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+
+        .confidence-level {
+            height: 100%;
+            background-color: var(--confidence-fill);
+            border-radius: 3px;
+            width: 0;
+            transition: width 1s cubic-bezier(0.12, 0.78, 0.52, 1.2);
+        }
+
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            background-color: var(--bot-msg-bg);
+            border-radius: 12px;
+            max-width: 100px;
+            margin-bottom: 15px;
+            animation: fadeIn 0.3s;
+        }
+
+        .typing-dot {
+            height: 8px;
+            width: 8px;
+            border-radius: 50%;
+            background-color: var(--text-color);
+            margin: 0 3px;
+            opacity: 0.6;
+            animation: typingAnimation 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(1) { animation-delay: 0s; }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typingAnimation {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+            100% { transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .chat-container {
+                height: 400px;
+            }
+
+            .message {
+                max-width: 90%;
+                padding: 10px;
+            }
+
+            .input-container {
+                flex-direction: column;
+            }
+
+            #user-input, #send-button {
+                width: 100%;
+            }
+        }
+
+        @media (min-width: 769px) and (max-width: 1024px) {
+            body {
+                padding: 20px;
+            }
+
+            .message {
+                max-width: 75%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Medical Chatbot Assistant</h1>
+        <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode">
+            <i class="fas fa-moon"></i>
+        </button>
+    </header>
+
+    <div class="chat-container" id="chat-container">
+        <div class="message bot-message">
+            Hello! I'm your medical chatbot assistant. Please describe your symptoms or health concerns, and I'll try to provide helpful information. Remember, I'm not a substitute for professional medical advice.
+        </div>
+    </div>
+
+    <div class="input-container">
+        <input type="text" id="user-input" placeholder="Describe your symptoms here...">
+        <button id="send-button">Send <i class="fas fa-paper-plane"></i></button>
+    </div>
+
+    <div class="disclaimer">
+        <strong>Important Disclaimer:</strong> This chatbot is for informational purposes only and does not provide medical advice, diagnosis, or treatment. Always consult with a qualified healthcare provider for medical concerns.
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatContainer = document.getElementById('chat-container');
+            const userInput = document.getElementById('user-input');
+            const sendButton = document.getElementById('send-button');
+            const themeToggle = document.getElementById('theme-toggle');
+            const themeIcon = themeToggle.querySelector('i');
+            
+            // Theme toggle functionality
+            themeToggle.addEventListener('click', function() {
+                const currentTheme = document.documentElement.getAttribute('data-theme');
+                const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+                
+                document.documentElement.setAttribute('data-theme', newTheme);
+                
+                // Update icon
+                if (newTheme === 'dark') {
+                    themeIcon.classList.remove('fa-moon');
+                    themeIcon.classList.add('fa-sun');
+                } else {
+                    themeIcon.classList.remove('fa-sun');
+                    themeIcon.classList.add('fa-moon');
+                }
+                
+                // Save preference to localStorage
+                localStorage.setItem('theme', newTheme);
+            });
+            
+            // Check for saved theme preference
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                document.documentElement.setAttribute('data-theme', savedTheme);
+                if (savedTheme === 'dark') {
+                    themeIcon.classList.remove('fa-moon');
+                    themeIcon.classList.add('fa-sun');
+                }
+            }
+            
+            // Generate a random user ID for this session
+            const userId = 'user_' + Math.random().toString(36).substring(2, 15);
+            
+            function createTypingIndicator() {
+                const typingDiv = document.createElement('div');
+                typingDiv.className = 'typing-indicator';
+                typingDiv.id = 'typing-indicator';
+                
+                for (let i = 0; i < 3; i++) {
+                    const dot = document.createElement('div');
+                    dot.className = 'typing-dot';
+                    typingDiv.appendChild(dot);
+                }
+                
+                return typingDiv;
+            }
+            
+            function addMessage(message, isUser) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
+                
+                if (isUser) {
+                    messageDiv.textContent = message;
+                } else {
+                    // Process bot response (could be JSON object with additional info)
+                    if (typeof message === 'object') {
+                        const mainResponse = document.createElement('div');
+                        mainResponse.innerHTML = message.response.replace(/\n/g, '<br>');
+                        messageDiv.appendChild(mainResponse);
+                        
+                        // Add symptoms section if there are symptoms detected
+                        if (message.detected_symptoms && message.detected_symptoms.length > 0) {
+                            const symptomsDiv = document.createElement('div');
+                            symptomsDiv.className = 'diagnosis-section';
+                            symptomsDiv.innerHTML = '<strong>Detected symptoms:</strong> ';
+                            
+                            const symptomsContainer = document.createElement('div');
+                            symptomsContainer.style.marginTop = '5px';
+                            
+                            message.detected_symptoms.forEach(symptom => {
+                                const symptomSpan = document.createElement('span');
+                                symptomSpan.className = 'symptom-tag';
+                                symptomSpan.textContent = symptom;
+                                symptomsContainer.appendChild(symptomSpan);
+                            });
+                            
+                            symptomsDiv.appendChild(symptomsContainer);
+                            messageDiv.appendChild(symptomsDiv);
+                        }
+                        
+                        // Add diagnoses section if there are potential diagnoses
+                        if (message.possible_diagnoses && message.possible_diagnoses.length > 0) {
+                            const diagnosesDiv = document.createElement('div');
+                            diagnosesDiv.className = 'diagnosis-section';
+                            diagnosesDiv.innerHTML = '<strong>Potential conditions to consider:</strong>';
+                            
+                            message.possible_diagnoses.slice(0, 3).forEach((diagnosis, index) => {
+                                const diagnosisItem = document.createElement('div');
+                                diagnosisItem.className = 'diagnosis-item';
+                                diagnosisItem.innerHTML = `<strong>${diagnosis.disease}</strong> (${diagnosis.confidence}%)`;
+                                
+                                // Add confidence bar
+                                const confidenceBar = document.createElement('div');
+                                confidenceBar.className = 'confidence-bar';
+                                const confidenceLevel = document.createElement('div');
+                                confidenceLevel.className = 'confidence-level';
+                                confidenceBar.appendChild(confidenceLevel);
+                                diagnosisItem.appendChild(confidenceBar);
+                                
+                                // Delay setting the width to allow animation
+                                setTimeout(() => {
+                                    confidenceLevel.style.width = `${diagnosis.confidence}%`;
+                                }, 100 + (index * 200));
+                                
+                                diagnosesDiv.appendChild(diagnosisItem);
+                            });
+                            
+                            messageDiv.appendChild(diagnosesDiv);
+                        }
+                    } else {
+                        messageDiv.innerHTML = message.replace(/\n/g, '<br>');
+                    }
+                }
+                
+                chatContainer.appendChild(messageDiv);
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
+            
+            async function sendMessage() {
+                const message = userInput.value.trim();
+                if (message === '') return;
+                
+                // Add user message to chat
+                addMessage(message, true);
+                userInput.value = '';
+                
+                // Show typing indicator
+                const typingIndicator = createTypingIndicator();
+                chatContainer.appendChild(typingIndicator);
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+                
+                try {
+                    // Send message to backend
+                    const response = await fetch('http://localhost:5000/api/chat', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            user_id: userId,
+                            message: message
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    // Remove typing indicator
+                    const indicator = document.getElementById('typing-indicator');
+                    if (indicator) {
+                        chatContainer.removeChild(indicator);
+                    }
+                    
+                    // Add bot response to chat
+                    addMessage(data, false);
+                } catch (error) {
+                    // Remove typing indicator
+                    const indicator = document.getElementById('typing-indicator');
+                    if (indicator) {
+                        chatContainer.removeChild(indicator);
+                    }
+                    
+                    // Add error message
+                    addMessage('Sorry, I encountered an error while processing your request. Please try again.', false);
+                    console.error('Error:', error);
+                }
+            }
+            
+            sendButton.addEventListener('click', sendMessage);
+            userInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+            
+            // Focus input on page load
+            userInput.focus();
+        });
+    </script>
+</body>
+</html>
