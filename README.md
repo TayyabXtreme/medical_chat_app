@@ -206,15 +206,15 @@ confidence = (correlation * 0.7 + symptom_coverage * 0.3) * 100
 ### Step 1: Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/medical-chatbot.git
-cd medical-chatbot
+git clone https://github.com/TayyabXtreme/medical_chat_app.git
+cd medical_chat_app
 ```
 
 ### Step 2: Create a Virtual Environment
 
 ```bash
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv\Scripts\activate
 ```
 
 ### Step 3: Install Dependencies
